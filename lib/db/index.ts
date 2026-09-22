@@ -183,26 +183,23 @@ function buildPostgresQueryBundle(pool: Pool) {
   } as const;
 }
 
-const sqliteDb = buildSqliteDb();
-const sqliteQueryBundle = buildSqliteQueryBundle(sqliteDb);
+let dbHandle: Database.Database | null = null;
+const connectionString = getPostgresConnectionString();
+const defaultPool = connectionString ? new Pool({ connectionString }) : null;
 
-function getDefaultPool(): Pool | null {
-  const connectionString = getPostgresConnectionString();
-  if (!connectionString) return null;
-  return new Pool({ connectionString });
-}
-
-const defaultPool = getDefaultPool();
 if (defaultPool) {
   void ensurePostgresSchema(defaultPool).catch((error) => {
     console.error("Failed to initialize Postgres session tables:", error);
   });
+} else {
+  dbHandle = buildSqliteDb();
 }
 
-const defaultQueryBundle = defaultPool ? buildPostgresQueryBundle(defaultPool) : sqliteQueryBundle;
+const defaultQueryBundle = defaultPool
+  ? buildPostgresQueryBundle(defaultPool)
+  : buildSqliteQueryBundle(dbHandle!);
 
-export default defaultPool ?? sqliteDb;
-
+export default defaultPool ?? dbHandle;
 export const q = defaultQueryBundle;
 
 export type SessionRow = {

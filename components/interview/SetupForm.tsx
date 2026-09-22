@@ -47,7 +47,8 @@ export default function SetupForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: role.trim(), company: company.trim(), companyUrl: companyUrl.trim(), jdText, resumeText }),
       });
-      const d = await r.json();
+      const contentType = r.headers.get("content-type") || "";
+      const d = contentType.includes("application/json") ? await r.json() : { error: `The production API returned HTTP ${r.status}. Check the Vercel function logs.` };
       if (!r.ok) throw new Error(d.error);
       router.push(`/interview/${d.sessionId}`);
     } catch (e: any) { setError(e.message); setStarting(false); }

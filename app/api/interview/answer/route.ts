@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { mkdtemp, rm, writeFile } from "fs/promises";
 import os from "os";
 import path from "path";
-import db, { q, isPersistentDbConfigured } from "@/lib/db";
+import { q, isPersistentDbConfigured } from "@/lib/db";
 import { transcribeBuffer, analyzeDelivery, isMicrophoneCheck, looksLikeConversationalQuestion } from "@/lib/ai/transcribe";
 import { evaluateAnswer, generateNextQuestion, detectSTAR, classifyConversationalTurn } from "@/lib/ai/interviewer";
 import { detectEOT, resolveDuration } from "@/lib/audio/eot";
@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
   if (!audio || !sessionId || !turnId)
     return NextResponse.json({ error: "audio, sessionId, turnId required" }, { status: 400 });
 
-  const session = q.session.get.get(sessionId) as any;
-  const turn = q.turn.get.get(turnId) as any;
+  const session = await q.session.get.get(sessionId) as any;
+  const turn = await q.turn.get.get(turnId) as any;
   if (!session || !turn || turn.session_id !== sessionId)
     return NextResponse.json({ error: "not found" }, { status: 404 });
   if (turn.answer_text)
@@ -42,13 +42,11 @@ export async function POST(req: NextRequest) {
     const buf = Buffer.from(await audio.arrayBuffer());
     await writeFile(audioPath, buf);
 
-    // Parallel: EOT detection + transcription
     const [eot, transcript] = await Promise.all([
       detectEOT(audioPath),
       transcribeBuffer(buf, "answer.webm"),
     ]);
 
-    // The Python bridge can fail silently (no ffmpeg/model); fall back to the browser-measured duration.
     const audioSeconds = resolveDuration(eot, clientSeconds);
     if (isMicrophoneCheck(transcript.text)) {
       return NextResponse.json({
@@ -78,7 +76,7 @@ export async function POST(req: NextRequest) {
       fillerCount: delivery.fillerCount, audioSeconds, wpm: delivery.wpm, star,
     });
 
-    q.turn.update.run({
+    await q.turn.update.run({
       id: turnId,
       answer_text: transcript.text,
       answer_audio_s: audioSeconds,
@@ -93,7 +91,7 @@ export async function POST(req: NextRequest) {
       eot_probability: eot.probability,
     });
 
-    const allTurns = q.turn.bySession.all(sessionId) as any[];
+    const allTurns = await q.turn.bySession.all(sessionId) as any[];
     const nextIdx = turn.turn_index + 1;
     const elapsedSeconds = Math.max(0, (Date.now() - Date.parse(`${session.created_at}Z`)) / 1000);
     const isDone = elapsedSeconds >= SESSION_DURATION_SECONDS;
@@ -103,7 +101,7 @@ export async function POST(req: NextRequest) {
     let nextQType: string | null = null;
 
     if (!isDone) {
-      const history = allTurns.filter(t => t.answer_text).map(t => ({
+      const history = allTurns.filter((t: any) => t.answer_text).map((t: any) => ({
         q: t.question, a: t.answer_text, score: t.score || 5, type: t.question_type,
       }));
       const next = await generateNextQuestion({
@@ -116,7 +114,7 @@ export async function POST(req: NextRequest) {
         nextTurnId = uuid();
         nextQuestion = next.question;
         nextQType = next.type;
-        q.turn.create.run({ id: nextTurnId, session_id: sessionId, turn_index: nextIdx, question: nextQuestion, question_type: nextQType });
+        await q.turn.create.run({ id: nextTurnId, session_id: sessionId, turn_index: nextIdx, question: nextQuestion, question_type: nextQType });
       }
     }
 

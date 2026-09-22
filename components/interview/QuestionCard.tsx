@@ -40,33 +40,33 @@ export default function QuestionCard({ question, questionType, turnIndex, remain
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#b3c3b8]">
-          <span className={`h-2 w-2 rounded-full ${isSpeaking ? "bg-[#d4f36a] shadow-[0_0_16px_rgba(212,243,106,0.8)] animate-pulse" : "bg-white/35"}`} />
-          Question {String(turnIndex + 1).padStart(2, "0")}
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[10px] font-medium tracking-[0.16em] text-muted">
+          <span className={`h-1.5 w-1.5 rounded-full ${isSpeaking ? "bg-accent shadow-[0_0_14px_rgba(201,162,75,0.7)] animate-pulse" : "bg-white/25"}`} />
+          QUESTION {String(turnIndex + 1).padStart(2, "0")}
         </div>
-        <span className="text-xs text-[#dfece3]">{minutes}:{seconds} remaining</span>
+        <span className="text-xs text-muted">{minutes}:{seconds} remaining</span>
       </div>
 
-      <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
-        <div className="h-full rounded-full bg-gradient-to-r from-[#d4f36a] via-[#8fe0b8] to-[#f6ad8f] transition-all duration-700 ease-out" style={{ width: `${pct}%` }} />
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.05]">
+        <div className="h-full rounded-full bg-gradient-to-r from-accent to-accent-soft transition-all duration-700 ease-out" style={{ width: `${pct}%` }} />
       </div>
 
       <div className="space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#d4f36a]/20 bg-[#d4f36a]/5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[#dfece3]">
+        <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/[0.06] px-2.5 py-1 text-[10px] font-medium tracking-[0.14em] text-accent-soft">
           {isSpeaking ? "Interviewer speaking" : meta.label}
         </div>
 
         <div className="max-w-2xl">
-          <p className="text-[clamp(1.5rem,2.6vw,2.5rem)] leading-[1.08] tracking-[-0.045em] text-[#edf3ed] font-medium drop-shadow-[0_18px_50px_rgba(16,24,19,0.35)]">
+          <p className="display-face text-[clamp(1.5rem,2.6vw,2.35rem)] leading-[1.14] text-ink font-normal">
             {displayed}
             {displayed.length < question.length && (
-              <span className="ml-1 inline-block h-8 w-[2px] animate-pulse rounded-full bg-[#d4f36a] align-middle" />
+              <span className="ml-1 inline-block h-7 w-[2px] animate-pulse rounded-full bg-accent align-middle" />
             )}
           </p>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-[#becfc2]">
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-xs text-dim">
         {meta.hint}
       </div>
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import { IconCheck, IconX } from "@/components/ui";
 
 interface STARData {
   situation: boolean;
@@ -18,17 +19,17 @@ export default function STARBreakdown({ star }: { star: STARData }) {
 
   return (
     <div>
-      <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2.5">STAR Structure</div>
+      <div className="text-xs text-dim mb-2.5">STAR structure</div>
       <div className="grid grid-cols-4 gap-2">
         {parts.map(p => {
           const hit = star[p.key as keyof STARData] as boolean;
           return (
             <div key={p.key} className={`rounded-xl p-2.5 text-center border transition-colors
-              ${hit ? "bg-success-dim border-success/30" : "bg-surface border-border"}`}>
-              <div className={`text-lg font-bold ${hit ? "text-success" : "text-dim"}`}>{p.label}</div>
-              <div className={`text-[10px] font-semibold ${hit ? "text-success" : "text-dim"}`}>{p.full}</div>
-              <div className="text-[9px] text-muted mt-0.5">{p.desc}</div>
-              <div className="mt-1 text-sm">{hit ? "✓" : "✗"}</div>
+              ${hit ? "bg-success-dim border-success/25" : "bg-black/10 border-border"}`}>
+              <div className={`display-face text-lg ${hit ? "text-success" : "text-dim"}`}>{p.label}</div>
+              <div className={`text-[10px] font-medium ${hit ? "text-success" : "text-dim"}`}>{p.full}</div>
+              <div className="text-[9px] text-dim mt-0.5">{p.desc}</div>
+              <div className="mt-1 flex justify-center">{hit ? <IconCheck className="text-success" /> : <IconX className="text-dim" />}</div>
             </div>
           );
         })}

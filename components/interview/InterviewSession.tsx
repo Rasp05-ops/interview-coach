@@ -6,7 +6,7 @@ import VoiceRecorder from "./VoiceRecorder";
 import QuestionCard from "./QuestionCard";
 import AnswerFeedback from "./AnswerFeedback";
 import { useBrowserTTS } from "./useBrowserTTS";
-import { Button, Spinner } from "@/components/ui";
+import { Button, Spinner, IconArrowLeft, IconArrowRight } from "@/components/ui";
 import { SESSION_DURATION_SECONDS } from "@/lib/interview/config";
 
 type Phase = "loading" | "speaking" | "recording" | "processing" | "feedback" | "finishing";
@@ -156,9 +156,9 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
   }
 
   if (error) return (
-    <div className="mx-auto mt-12 max-w-xl rounded-[28px] border border-[#f3c0b2] bg-[#fff7f5] p-8 text-center shadow-[0_18px_60px_rgba(25,38,33,0.08)] animate-fade-up">
-      <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#c8674c]">Something went wrong</p>
-      <div className="mt-4 rounded-2xl border border-[#f0c4b6] bg-[#fff1ee] p-4 text-sm leading-6 text-[#4e322b]">{error}</div>
+    <div className="mx-auto mt-12 max-w-xl rounded-3xl border border-danger/20 bg-danger-dim/60 p-8 text-center animate-fade-up">
+      <p className="text-xs font-medium tracking-[0.16em] text-danger">Something went wrong</p>
+      <div className="mt-4 rounded-2xl border border-danger/15 bg-black/20 p-4 text-sm leading-6 text-ink">{error}</div>
       <div className="mt-6 flex items-center justify-center gap-3">
         <Button onClick={() => void startInterview()} variant="ghost">Retry</Button>
         <Button onClick={() => router.push("/setup")}>Back to setup</Button>
@@ -167,16 +167,16 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
   );
 
   const notice = conversationNotice && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 px-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="conversation-notice-title">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-white p-6 shadow-[0_24px_80px_rgba(33,76,58,0.2)] animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="conversation-notice-title">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)] animate-slide-up">
         <div className="flex items-start gap-3">
           <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-accent-dim text-accent">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
               <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
             </svg>
           </div>
           <div className="flex-1">
-            <h2 id="conversation-notice-title" className="text-base font-semibold text-forest">Let&apos;s continue</h2>
+            <h2 id="conversation-notice-title" className="text-base font-medium text-ink">Let&apos;s continue</h2>
             <p className="mt-2 text-sm leading-6 text-muted">{conversationNotice}</p>
           </div>
         </div>
@@ -187,10 +187,10 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
 
   if (phase === "loading") return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 animate-fade-up">
-      <div className="rounded-full border border-white/10 bg-white/60 p-4 shadow-[0_18px_56px_rgba(20,26,22,0.08)] backdrop-blur-sm">
+      <div className="rounded-full border border-border bg-card p-4">
         <Spinner size={40} />
       </div>
-      <p className="text-sm font-medium text-[#4d5d57]">Preparing your interview…</p>
+      <p className="text-sm text-muted">Preparing your interview…</p>
       {notice}
     </div>
   );
@@ -200,12 +200,14 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
 
   return (
     <>
-    <div className="interview-room mx-auto max-w-6xl rounded-[32px] px-5 py-5 shadow-[0_30px_100px_rgba(17,25,21,0.12)] ring-1 ring-black/5 sm:px-8 sm:py-7">
-      <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-5">
-        <button onClick={() => router.push("/")} className="text-xs font-medium text-[#b7c7bf] transition-colors hover:text-white">← Exit room</button>
+    <div className="interview-room mx-auto max-w-6xl rounded-[32px] px-5 py-5 shadow-[0_30px_100px_rgba(0,0,0,0.35)] ring-1 ring-white/[0.03] sm:px-8 sm:py-7">
+      <div className="relative z-10 flex items-center justify-between border-b border-white/[0.06] pb-5">
+        <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-xs font-medium text-dim transition-colors hover:text-ink">
+          <IconArrowLeft size={12} /> Exit room
+        </button>
         <div className="flex items-center gap-3">
-          <span className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-[#dfece3] sm:block">Live interview</span>
-          <span className="h-2 w-2 rounded-full bg-[#d4f36a] animate-pulse" />
+          <span className="hidden text-[10px] font-medium tracking-[0.2em] text-dim sm:block">Live interview</span>
+          <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
           <Button onClick={endEarly} variant="ghost" size="sm" disabled={phase === "finishing"}>End session</Button>
         </div>
       </div>
@@ -213,7 +215,7 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
       <div className="relative z-10 grid gap-6 py-7 lg:grid-cols-[1.15fr_.85fr]">
         <section className="space-y-6">
           {current && (
-            <div className="room-panel rounded-[26px] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-7 animate-fade-up">
+            <div className="room-panel rounded-[26px] p-5 sm:p-7 animate-fade-up">
               <QuestionCard question={current.question} questionType={current.questionType} turnIndex={current.turnIndex} remainingSeconds={current.remainingSeconds} isSpeaking={phase === "speaking"} />
             </div>
           )}
@@ -228,8 +230,8 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
         </section>
 
         <aside className="flex flex-col gap-6">
-          <div className="room-panel rounded-[26px] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-7">
-            <div className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9fb3a8]">Response console</div>
+          <div className="room-panel rounded-[26px] p-5 sm:p-7">
+            <div className="room-kicker mb-4">RESPONSE CONSOLE</div>
             {(phase === "speaking" || phase === "recording") && (
               <VoiceRecorder
                 onComplete={handleRecorded}
@@ -241,30 +243,30 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
             {phase === "processing" && (
               <div className="flex flex-col items-center gap-3 py-10">
                 <Spinner size={36} />
-                <p className="text-sm text-[#dfece3]">Transcribing · detecting STAR · evaluating…</p>
+                <p className="text-sm text-muted">Transcribing, detecting STAR, evaluating…</p>
               </div>
             )}
 
             {phase === "finishing" && (
               <div className="flex flex-col items-center gap-3 py-10">
                 <Spinner size={36} />
-                <p className="text-sm text-[#dfece3]">Generating your session report…</p>
+                <p className="text-sm text-muted">Generating your session report…</p>
               </div>
             )}
 
             {phase === "feedback" && feedback && (
-              <div className="space-y-4 text-[#edf3ed] animate-fade-up">
+              <div className="space-y-4 text-ink animate-fade-up">
                 <AnswerFeedback {...feedback} />
-                <div className="border-t border-white/10 pt-4">
+                <div className="border-t border-white/[0.06] pt-4">
                   <button onClick={handleNext} className="room-button w-full" disabled={phase !== "feedback"}>
-                    {nextRef.current ? "Next question →" : "Finish & see results →"}
+                    {nextRef.current ? "Next question" : "Finish and see results"} <IconArrowRight size={13} />
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="hidden rounded-[26px] border border-white/10 bg-white/5 p-5 text-xs leading-6 text-[#b7c7bf] lg:block">
+          <div className="hidden rounded-[26px] border border-white/[0.06] bg-white/[0.02] p-5 text-xs leading-6 text-dim lg:block">
             The room listens for a complete thought. Take a breath, be specific, and let the answer land before stopping.
           </div>
         </aside>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Badge, Button, ScoreBadge, ProgressBar, Spinner } from "@/components/ui";
+import { Card, Badge, Button, ScoreBadge, ProgressBar, Spinner, IconCheck, IconArrowLeft, IconArrowRight } from "@/components/ui";
 import STARBreakdown from "@/components/interview/STARBreakdown";
 
 const TYPE_COLORS: Record<string, any> = {
@@ -14,13 +14,6 @@ function scoreColor(s: number): "success" | "warning" | "danger" {
 }
 
 function fmt(s: number) { const m = Math.floor(s/60); return `${m}m ${Math.round(s%60)}s`; }
-function ago(d: string) {
-  const diff = (Date.now() - new Date(d+"Z").getTime()) / 1000;
-  if (diff < 120) return "just now";
-  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-  return `${Math.floor(diff/86400)}d ago`;
-}
 
 interface Turn {
   turn_index: number; question: string; question_type: string; answer_text: string;
@@ -62,24 +55,26 @@ export default function ReviewPage({ sessionId }: { sessionId: string }) {
   const verdictVariant: any = overallScore >= 7 ? "success" : overallScore >= 5 ? "warning" : "danger";
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 pb-16">
+    <div className="max-w-2xl mx-auto space-y-4 pb-16 animate-fade-up">
       {/* Nav */}
       <div className="flex items-center justify-between pt-2">
-        <button onClick={() => router.push("/")} className="text-dim hover:text-muted text-sm">← Home</button>
-        <Button onClick={() => router.push("/setup")} size="sm">New Interview</Button>
+        <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-dim hover:text-muted text-sm transition-colors">
+          <IconArrowLeft size={12} /> Home
+        </button>
+        <Button onClick={() => router.push("/setup")} size="sm">New interview</Button>
       </div>
 
       {/* Hero */}
-      <Card className="text-center space-y-3">
+      <Card className="text-center space-y-3 py-8">
         <div className="text-muted text-sm">{session.role}{session.company ? ` at ${session.company}` : ""}</div>
         <div>
-          <div className={`text-6xl font-bold tabular-nums ${overallScore >= 7 ? "text-success" : overallScore >= 5 ? "text-warning" : "text-danger"}`}>
+          <div className={`display-face text-6xl tabular-nums ${overallScore >= 7 ? "text-success" : overallScore >= 5 ? "text-warning" : "text-danger"}`}>
             {overallScore.toFixed(1)}
           </div>
-          <div className="text-muted text-sm mt-1">out of 10</div>
+          <div className="text-dim text-sm mt-1">out of 10</div>
         </div>
-        <Badge variant={verdictVariant}>{verdict}</Badge>
-        <div className="grid grid-cols-4 gap-3 pt-3 border-t border-border">
+        <div className="flex justify-center"><Badge variant={verdictVariant}>{verdict}</Badge></div>
+        <div className="grid grid-cols-4 gap-3 pt-4 border-t border-border mt-2">
           {[
             { label: "Questions", value: turns.length },
             { label: "Duration",  value: fmt(session.duration_s) },
@@ -87,32 +82,32 @@ export default function ReviewPage({ sessionId }: { sessionId: string }) {
             { label: "Fillers",   value: totalFillers, color: totalFillers <= 5 ? "text-success" : totalFillers <= 12 ? "text-warning" : "text-danger" },
           ].map(s => (
             <div key={s.label} className="text-center">
-              <div className={`text-lg font-semibold ${(s as any).color || ""}`}>{s.value}</div>
-              <div className="text-xs text-muted">{s.label}</div>
+              <div className={`text-lg font-medium ${(s as any).color || "text-ink"}`}>{s.value}</div>
+              <div className="text-xs text-dim">{s.label}</div>
             </div>
           ))}
         </div>
       </Card>
 
       {/* Strengths + Gaps */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <Card>
-          <div className="text-xs font-semibold text-success uppercase tracking-wide mb-3">Top Strengths</div>
+          <div className="text-xs text-success mb-3">Top strengths</div>
           <ul className="space-y-2">
-            {strengths.map((s, i) => <li key={i} className="flex gap-2 text-sm text-muted"><span className="text-success">✓</span>{s}</li>)}
+            {strengths.map((s, i) => <li key={i} className="flex gap-2 text-sm text-muted"><IconCheck className="text-success flex-shrink-0 mt-1" />{s}</li>)}
           </ul>
         </Card>
         <Card>
-          <div className="text-xs font-semibold text-danger uppercase tracking-wide mb-3">Critical Gaps</div>
+          <div className="text-xs text-danger mb-3">Critical gaps</div>
           <ul className="space-y-2">
-            {gaps.map((g, i) => <li key={i} className="flex gap-2 text-sm text-muted"><span className="text-danger">!</span>{g}</li>)}
+            {gaps.map((g, i) => <li key={i} className="flex gap-2 text-sm text-muted"><span className="text-danger flex-shrink-0">·</span>{g}</li>)}
           </ul>
         </Card>
       </div>
 
       {/* Q scores bar chart */}
       <Card>
-        <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Question Scores</div>
+        <div className="text-xs text-dim mb-4">Question scores</div>
         <div className="space-y-3">
           {turns.map((t, i) => (
             <div key={i} className="flex items-center gap-3">
@@ -127,11 +122,11 @@ export default function ReviewPage({ sessionId }: { sessionId: string }) {
 
       {/* Study plan */}
       <Card>
-        <div className="text-xs font-semibold text-accent uppercase tracking-wide mb-3">📚 Study Plan</div>
+        <div className="text-xs text-accent-soft mb-3">Study plan</div>
         <ol className="space-y-2">
           {studyPlan.map((item, i) => (
             <li key={i} className="flex gap-3 text-sm text-muted">
-              <span className="text-accent font-semibold flex-shrink-0">{i+1}.</span>{item}
+              <span className="display-face text-accent-soft flex-shrink-0">{i+1}</span>{item}
             </li>
           ))}
         </ol>
@@ -139,8 +134,8 @@ export default function ReviewPage({ sessionId }: { sessionId: string }) {
 
       {/* Turn accordion */}
       <div>
-        <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">Detailed Breakdown</div>
-        <div className="space-y-3">
+        <div className="text-xs text-dim mb-3">Detailed breakdown</div>
+        <div className="space-y-2.5">
           {turns.map((t, i) => (
             <Card key={i} onClick={() => setExpanded(expanded === i ? null : i)}>
               <div className="flex items-start justify-between gap-3">
@@ -156,7 +151,7 @@ export default function ReviewPage({ sessionId }: { sessionId: string }) {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <ScoreBadge score={t.score} />
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"
-                    className={`text-dim transition-transform ${expanded === i ? "rotate-180" : ""}`}>
+                    className={`text-dim transition-transform duration-200 ${expanded === i ? "rotate-180" : ""}`}>
                     <path d="M3 5l4 4 4-4" strokeLinecap="round" />
                   </svg>
                 </div>
@@ -172,19 +167,19 @@ export default function ReviewPage({ sessionId }: { sessionId: string }) {
 
                   {t.strengths?.length > 0 && (
                     <ul className="space-y-1">
-                      {t.strengths.map((s, j) => <li key={j} className="flex gap-2 text-xs text-muted"><span className="text-success">✓</span>{s}</li>)}
+                      {t.strengths.map((s, j) => <li key={j} className="flex gap-2 text-xs text-muted"><IconCheck className="text-success flex-shrink-0 mt-0.5" />{s}</li>)}
                     </ul>
                   )}
                   {t.improvements?.length > 0 && (
                     <ul className="space-y-1">
-                      {t.improvements.map((s, j) => <li key={j} className="flex gap-2 text-xs text-muted"><span className="text-warning">→</span>{s}</li>)}
+                      {t.improvements.map((s, j) => <li key={j} className="flex gap-2 text-xs text-muted"><IconArrowRight size={10} className="text-warning flex-shrink-0 mt-0.5" />{s}</li>)}
                     </ul>
                   )}
 
                   {t.answer_text && (
                     <details>
                       <summary className="text-xs text-dim cursor-pointer">Transcript</summary>
-                      <p className="mt-2 text-xs text-muted font-mono bg-surface rounded-lg p-3 leading-relaxed">{t.answer_text}</p>
+                      <p className="mt-2 text-xs text-muted font-mono bg-black/10 rounded-lg p-3 leading-relaxed">{t.answer_text}</p>
                     </details>
                   )}
                 </div>

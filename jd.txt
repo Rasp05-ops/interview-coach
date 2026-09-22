@@ -1,0 +1,43 @@
+JOB TITLE: Software Engineer (Backend / Systems)
+COMPANY: Apex Cloud Systems
+LOCATION: New York, NY (Hybrid)
+EMPLOYMENT TYPE: Full-time
+
+--------------------------------------------------------------------------------
+ABOUT THE ROLE
+--------------------------------------------------------------------------------
+Apex Cloud Systems is seeking a Software Engineer to join our Core Backend 
+Infrastructure team. In this role, you will design, build, and maintain high-throughput 
+microservices and data processing systems that power our real-time analytics platform.
+
+--------------------------------------------------------------------------------
+KEY RESPONSIBILITIES
+--------------------------------------------------------------------------------
+* Design, code, and deploy robust, high-performance backend microservices using 
+  Python and C++.
+* Optimize data storage, caching layer performance, and database queries (SQL/NoSQL).
+* Write clean, maintainable, and well-tested code following industry best practices.
+* Collaborate with product managers, frontend engineers, and DevOps teams to 
+  deliver new system features.
+* Monitor, debug, and troubleshoot production issues to maintain service reliability 
+  and low latency.
+
+--------------------------------------------------------------------------------
+REQUIREMENTS & QUALIFICATIONS
+--------------------------------------------------------------------------------
+* Bachelor's degree in Computer Science, Software Engineering, or a related field 
+  (or equivalent experience).
+* 2+ years of professional software development experience in Python, C++, or Go.
+* Demonstrated experience designing and consuming RESTful or gRPC APIs.
+* Hands-on experience with relational databases (PostgreSQL, MySQL) and caching 
+  layers (Redis, Memcached).
+* Familiarity with containerization tools (Docker) and Cloud platforms (AWS, GCP, or Azure).
+* Strong understanding of Data Structures, Algorithms, and System Design principles.
+
+--------------------------------------------------------------------------------
+NICE-TO-HAVES
+--------------------------------------------------------------------------------
+* Experience with distributed task queues, event streaming (Kafka/RabbitMQ), or 
+  multi-threaded programming.
+* Exposure to modern AI/ML frameworks or agentic workflow orchestration.
+* Active contributions to open-source software projects.

@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: #f3f5f2;
+  color: #17231f;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(circle at 8% 0%, rgba(213, 235, 222, 0.9), transparent 28rem),
+    linear-gradient(135deg, #f8faf7 0%, #eef2ee 100%);
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: #e7ece7; }
+::-webkit-scrollbar-thumb { background: #aab8ad; border-radius: 3px; }
+input[type="range"] { accent-color: #e05b3f; }
+textarea { resize: none; }
+::selection { background: #f3b8a9; color: #17231f; }
+
+.display-face { font-family: Georgia, "Times New Roman", serif; letter-spacing: -0.02em; }
+.studio-grid { background-image: linear-gradient(rgba(31, 65, 50, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(31, 65, 50, 0.045) 1px, transparent 1px); background-size: 32px 32px; }
+
+@keyframes recording-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,91,63,0.28); }
+  50% { box-shadow: 0 0 0 14px rgba(224,91,63,0); }
+}
+.recording-pulse { animation: recording-pulse 1.4s ease-in-out infinite; }
+
+@keyframes breathe { 0%, 100% { transform: scale(1); opacity: .72; } 50% { transform: scale(1.08); opacity: 1; } }
+.breathe { animation: breathe 2.4s ease-in-out infinite; }
+
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.2); }
+  50% { transform: scaleY(1); }
+}

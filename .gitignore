@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.data/
+.env.local
+*.log
+__pycache__/
+*.pyc
+python/smart-turn-v3*.onnx
+
+# python
+__pycache__/
+.pytest_cache/
+*.pyc

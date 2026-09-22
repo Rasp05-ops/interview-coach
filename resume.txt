@@ -1,0 +1,59 @@
+ALEX MORGAN
+Email: alex.morgan@email.com | Phone: +1 (555) 019-2834
+GitHub: github.com/alexmorgan | LinkedIn: linkedin.com/in/alexmorgan
+Location: New York, NY
+
+--------------------------------------------------------------------------------
+PROFESSIONAL SUMMARY
+--------------------------------------------------------------------------------
+Software Engineer with 3+ years of experience building scalable backend 
+services, RESTful APIs, and data processing pipelines. Proficient in Python, 
+C++, and modern Cloud architectures. Strong background in system design, 
+algorithm optimization, and collaborative agile development.
+
+--------------------------------------------------------------------------------
+TECHNICAL SKILLS
+--------------------------------------------------------------------------------
+* Languages: Python, C++, SQL, JavaScript (TypeScript)
+* Frameworks & Libraries: FastAPI, PyTorch, Node.js, Express
+* Tools & Infrastructure: Docker, Git, AWS (S3, EC2, Lambda), PostgreSQL, Redis
+* Core Concepts: Data Structures & Algorithms, Distributed Systems, Microservices
+
+--------------------------------------------------------------------------------
+WORK EXPERIENCE
+--------------------------------------------------------------------------------
+Software Engineer | Tech Core Solutions | New York, NY
+June 2024 - Present
+* Architected and deployed microservices handling 2M+ daily requests using 
+  Python and FastAPI, reducing API latency by 25%.
+* Optimized PostgreSQL database queries and implemented Redis caching, 
+  improving query response times by 40%.
+* Designed and maintained automated CI/CD pipelines via GitHub Actions, 
+  reducing deployment errors by 30%.
+
+Junior Developer | DataFlux Systems | Boston, MA
+July 2023 - May 2024
+* Developed automated ETL pipelines in Python to process and clean multi-gigabyte 
+  datasets for internal analytics dashboards.
+* Collaborated with cross-functional teams to integrate third-party REST APIs, 
+  ensuring 99.9% uptime.
+* Refactored legacy C++ codebase for internal simulation tools, improving execution 
+  speed by 15%.
+
+--------------------------------------------------------------------------------
+PROJECTS
+--------------------------------------------------------------------------------
+Distributed Task Scheduler
+* Built a lightweight distributed task queue in C++ utilizing Redis for state 
+  management and dynamic worker allocation.
+* Implemented custom RPC protocols to communicate task status across cluster nodes.
+
+Multi-Agent Workflow Engine
+* Developed an event-driven automation framework in Python using asynchronous 
+  queues to coordinate autonomous AI agents for data retrieval.
+
+--------------------------------------------------------------------------------
+EDUCATION
+--------------------------------------------------------------------------------
+Bachelor of Science in Computer Science
+State University | Graduated: May 2023

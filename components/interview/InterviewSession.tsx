@@ -6,7 +6,7 @@ import VoiceRecorder from "./VoiceRecorder";
 import QuestionCard from "./QuestionCard";
 import AnswerFeedback from "./AnswerFeedback";
 import { useBrowserTTS } from "./useBrowserTTS";
-import { Card, Button, Spinner } from "@/components/ui";
+import { Button, Spinner } from "@/components/ui";
 import { SESSION_DURATION_SECONDS } from "@/lib/interview/config";
 
 type Phase = "loading" | "speaking" | "recording" | "processing" | "feedback" | "finishing";
@@ -174,27 +174,32 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
     </div>
   );
 
+  const stageClass = phase === "speaking" ? "ai-speaking" : phase === "recording" ? "user-speaking" : "";
+  const stageLabel = phase === "speaking" ? "Interviewer speaking" : phase === "recording" ? "Your turn" : phase === "processing" ? "Reading your answer" : "Interview room";
+
   return (
     <>
-    <div className="max-w-2xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <button onClick={() => router.push("/")} className="text-dim hover:text-muted text-sm transition-colors">← Home</button>
-        <Button onClick={endEarly} variant="ghost" size="sm" disabled={phase === "finishing"}>
-          End early
-        </Button>
+    <div className="interview-room mx-auto max-w-6xl rounded-[28px] px-5 py-5 sm:px-8 sm:py-7">
+      <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-5">
+        <button onClick={() => router.push("/")} className="room-muted text-xs transition-colors hover:text-white">← Exit room</button>
+        <div className="flex items-center gap-3"><span className="room-kicker hidden sm:block">Live interview</span><span className="h-2 w-2 rounded-full bg-[#d4f36a] animate-pulse" /><Button onClick={endEarly} variant="ghost" size="sm" disabled={phase === "finishing"}>End session</Button></div>
       </div>
 
-      {current && (
-        <Card>
-          <QuestionCard
-            question={current.question} questionType={current.questionType}
-            turnIndex={current.turnIndex} remainingSeconds={current.remainingSeconds}
-            isSpeaking={phase === "speaking"}
-          />
-        </Card>
-      )}
+      <div className="relative z-10 grid gap-6 py-7 lg:grid-cols-[1.1fr_.9fr]">
+        <section className="space-y-6">
+          {current && <div className="room-panel rounded-[24px] p-5 sm:p-7"><QuestionCard question={current.question} questionType={current.questionType} turnIndex={current.turnIndex} remainingSeconds={current.remainingSeconds} isSpeaking={phase === "speaking"} /></div>}
+          <div className={`voice-stage room-panel rounded-[24px] ${stageClass}`}>
+            <div className="voice-orbit" />
+            <div className="voice-core" aria-hidden="true">
+              {phase === "recording" ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v5m-3 0h6" strokeLinecap="round"/></svg> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 12h2m3-4v8m4-11v14m4-11v8m3-4h-2" strokeLinecap="round"/></svg>}
+            </div>
+            <div className="voice-state">{stageLabel}</div>
+          </div>
+        </section>
 
-      <Card>
+        <aside className="flex flex-col gap-6">
+          <div className="room-panel rounded-[24px] p-5 sm:p-7">
+            <div className="room-kicker mb-4">Response console</div>
         {(phase === "speaking" || phase === "recording") && (
           <VoiceRecorder
             onComplete={handleRecorded}
@@ -218,22 +223,19 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
         )}
 
         {phase === "feedback" && feedback && (
-          <div className="space-y-4">
+          <div className="space-y-4 text-[#edf3ed]">
             <AnswerFeedback {...feedback} />
-            <div className="pt-3 border-t border-border">
-              <Button onClick={handleNext} className="w-full" disabled={phase !== "feedback"}>
-                {nextRef.current ? "Next Question →" : "Finish & See Results →"}
-              </Button>
+            <div className="border-t border-white/10 pt-4">
+              <button onClick={handleNext} className="room-button w-full" disabled={phase !== "feedback"}>
+                {nextRef.current ? "Next question →" : "Finish & see results →"}
+              </button>
             </div>
           </div>
         )}
-      </Card>
-
-      {phase === "speaking" && (
-        <p className="text-center text-xs text-dim">
-          🔊 Interviewer is speaking… recorder activates when done
-        </p>
-      )}
+          </div>
+          <div className="room-muted hidden rounded-[24px] border border-white/10 p-5 text-xs leading-6 lg:block">The room listens for a complete thought. Take a breath, be specific, and let the answer land before stopping.</div>
+        </aside>
+      </div>
     </div>
     {notice}
     </>

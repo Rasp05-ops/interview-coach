@@ -6,11 +6,11 @@ AI-powered mock interview platform built with Groq, local models, and SQLite.
 
 | Layer | What | Cost |
 |---|---|---|
-| LLM | Groq `llama-3.3-70b-versatile` | Free tier (30 RPM) |
-| STT | Groq `whisper-large-v3-turbo` | Free tier (2000 req/day) |
-| TTS | Browser `SpeechSynthesis` API | Always free, offline |
-| EOT | Smart Turn v3 ONNX (local) | Free, runs on CPU |
-| DB | SQLite (`better-sqlite3`) | Free, zero config |
+| LLM | Groq `llama-3.3-70b-versatile` | Usage-based plan |
+| STT | Groq `whisper-large-v3-turbo` | Usage-based plan |
+| TTS | Browser `SpeechSynthesis` API | Offline, no extra setup |
+| EOT | Smart Turn v3 ONNX (local) | Runs on CPU |
+| DB | SQLite (`better-sqlite3`) | Zero config |
 
 ## Features
 
@@ -25,8 +25,8 @@ AI-powered mock interview platform built with Groq, local models, and SQLite.
 
 ## Quick start
 
-### 1. Get a free Groq API key
-Sign up at **https://console.groq.com** — no credit card needed.
+### 1. Add your Groq API key
+Create or sign in to your Groq account at **https://console.groq.com** and copy your API key.
 
 ### 2. Install
 **Prerequisites:** Node 18+, Python 3.10+, and **ffmpeg** on your PATH (the Smart Turn bridge uses it to decode audio).
@@ -53,8 +53,8 @@ npm run dev
 # → http://localhost:3000
 ```
 
-## Rate limits (free tier)
-Groq's free-tier limits (requests, tokens and audio seconds per minute/hour/day, per model) change over time and vary by model. Check **console.groq.com → Settings → Limits** for your account's real numbers rather than relying on figures in this README. Browser TTS is unlimited. On a 429, wait for the reset.
+## Rate limits
+Groq usage limits (requests, tokens and audio seconds per minute/hour/day, per model) change over time and vary by model. Check **console.groq.com → Settings → Limits** for your account's real numbers rather than relying on figures in this README. Browser TTS is available without any additional service billing. On a 429, wait for the reset.
 
 ## Structure
 ```
@@ -99,9 +99,9 @@ python/
   requirements.txt
 ```
 
-## Agent service (in progress)
+## Agent service
 
-An agentic interviewer with interview-aware turn-taking lives in `service/` (Python, tested, not yet wired into the voice UI; a text-mode page is at `/agent`). See `service/README.md` and `docs/ROADMAP.md` for what exists, what is verified, and what is not.
+The Python service provides the realtime `/agent` flow and a standalone `/ws/eot` Smart Turn endpoint used by the main interview recorder. The browser streams 16 kHz PCM while recording; Smart Turn emits an end decision and the existing manual stop remains available as a fallback.
 
 ## Production deployment
 
@@ -119,5 +119,7 @@ An agentic interviewer with interview-aware turn-taking lives in `service/` (Pyt
 2. Railway will use `requirements.txt` and `railway.toml` at the repository root.
 3. Add `GROQ_API_KEY` to the Railway service variables.
 4. Deploy and confirm `https://your-agent.up.railway.app/health` returns `{\"ok\":true,...}`.
+
+The Render equivalent uses `render.yaml` and downloads the Smart Turn CPU model during its build. Set `NEXT_PUBLIC_EOT_WS_URL` to `wss://your-render-service.onrender.com/ws/eot` on Vercel when the backend is deployed on Render.
 
 The Railway service is stateful in memory and its optional candidate memory is written to local disk. Use one running replica for this service; multiple replicas require shared session storage. The main Next.js interview flow uses SQLite, which is not durable on Vercel serverless deployments. Use a persistent database such as Railway Postgres or another hosted SQLite-compatible database before relying on session history in production.

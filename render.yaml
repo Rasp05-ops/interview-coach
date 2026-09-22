@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: interview-coach-agent
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python python/download_model.py
+    startCommand: python -m uvicorn service.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false

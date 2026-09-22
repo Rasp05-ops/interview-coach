@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "pip install -r requirements.txt"
+buildCommand = "pip install -r requirements.txt && python python/download_model.py"
 
 [deploy]
 startCommand = "python -m uvicorn service.app:app --host 0.0.0.0 --port $PORT"

@@ -19,6 +19,7 @@ from .agent.llm import LLM, GroqChat, LLMError, ScriptedLLM
 from .agent.memory import JsonFileMemory
 from .agent.retrieval import Retriever
 from .gateway import run_gateway
+from .eot import run_eot
 
 app = FastAPI(title="Interview agent service", version="0.1.0")
 
@@ -144,3 +145,8 @@ async def ws_endpoint(ws: WebSocket, session_id: str) -> None:
         await ws.close(code=4404)
         return
     await run_gateway(ws, sess)
+
+
+@app.websocket("/ws/eot")
+async def eot_endpoint(ws: WebSocket) -> None:
+    await run_eot(ws)

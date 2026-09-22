@@ -18,6 +18,50 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const animRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const eotSocketRef = useRef<WebSocket | null>(null);
+  const eotContextRef = useRef<AudioContext | null>(null);
+  const eotNodeRef = useRef<AudioWorkletNode | null>(null);
+
+  async function connectEOT(stream: MediaStream) {
+    const configured = process.env.NEXT_PUBLIC_EOT_WS_URL || process.env.NEXT_PUBLIC_AGENT_WS_URL;
+    const base = configured || `ws://${window.location.hostname}:8001`;
+    const eotUrl = configured?.includes("/ws/") ? configured : `${base.replace(/\/$/, "")}/ws/eot`;
+    try {
+      const socket = new WebSocket(eotUrl);
+      eotSocketRef.current = socket;
+      await new Promise<void>((resolve, reject) => {
+        socket.onopen = () => resolve();
+        socket.onerror = () => reject(new Error("EOT unavailable"));
+      });
+      socket.onmessage = event => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === "decision" && message.decision === "end" && mrRef.current?.state === "recording") {
+            if (timerRef.current) clearInterval(timerRef.current);
+            setElapsed(0);
+            mrRef.current.stop();
+          }
+        } catch { /* Keep manual stop available if the service sends an invalid event. */ }
+      };
+      const context = new AudioContext();
+      await context.audioWorklet.addModule("/audio-stream-processor.js");
+      const source = context.createMediaStreamSource(stream);
+      const node = new AudioWorkletNode(context, "audio-stream-processor");
+      const silent = context.createGain();
+      silent.gain.value = 0;
+      node.port.onmessage = event => {
+        if (socket.readyState === WebSocket.OPEN) socket.send(event.data);
+      };
+      source.connect(node);
+      node.connect(silent);
+      silent.connect(context.destination);
+      eotContextRef.current = context;
+      eotNodeRef.current = node;
+    } catch {
+      eotSocketRef.current?.close();
+      eotSocketRef.current = null;
+    }
+  }
 
   function stopViz() {
     if (animRef.current) cancelAnimationFrame(animRef.current);
@@ -52,6 +96,12 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const dur = (Date.now() - t0Ref.current) / 1000;
         stream.getTracks().forEach(t => t.stop());
+        eotSocketRef.current?.close();
+        eotSocketRef.current = null;
+        eotNodeRef.current?.disconnect();
+        eotNodeRef.current = null;
+        void eotContextRef.current?.close();
+        eotContextRef.current = null;
         stopViz();
         setRecording(false);
         onComplete(blob, dur);
@@ -59,6 +109,7 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
 
       mr.start(100);
       mrRef.current = mr;
+      void connectEOT(stream);
       t0Ref.current = Date.now();
       setRecording(true);
       timerRef.current = setInterval(() => setElapsed(Math.floor((Date.now() - t0Ref.current) / 1000)), 200);
@@ -78,16 +129,19 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
     stopViz();
     if (timerRef.current) clearInterval(timerRef.current);
     streamRef.current?.getTracks().forEach(t => t.stop());
+    eotSocketRef.current?.close();
+    eotNodeRef.current?.disconnect();
+    void eotContextRef.current?.close();
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-6 py-2">
+    <div className="flex flex-col items-center gap-5 py-2">
       {/* Volume bars */}
-      <div className="flex items-center justify-center gap-[3px] h-14">
+      <div className="flex h-12 items-center justify-center gap-[4px]" aria-label={recording ? "Voice activity" : "Microphone ready"}>
         {bars.map((h, i) => (
           <div
             key={i}
-            className={`w-1.5 rounded-full transition-all duration-75 ${recording ? "bg-accent" : "bg-border"}`}
+            className={`w-1 rounded-full transition-all duration-75 ${recording ? "bg-[#f07050]" : "bg-white/20"} ${recording ? "animate-wave" : ""}`}
             style={{ height: `${Math.min(56, h)}px` }}
           />
         ))}
@@ -97,8 +151,8 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
       <button
         onClick={recording ? stop : start}
         disabled={disabled || isProcessing}
-        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 text-white
-          ${recording ? "bg-danger recording-pulse" : "bg-accent hover:bg-accent/85"}
+        className={`room-button h-16 w-16 !p-0 text-white
+          ${recording ? "recording recording-pulse" : "bg-white/15 hover:bg-white/25"}
           disabled:opacity-40 disabled:cursor-not-allowed`}
       >
         {recording ? (
@@ -123,13 +177,13 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
           <p className="text-muted text-sm animate-pulse">Analysing your answer…</p>
         ) : recording ? (
           <>
-            <p className="text-danger text-sm font-medium">● Recording — {elapsed}s</p>
-            <p className="text-dim text-xs mt-0.5">Click stop when you finish speaking</p>
+            <p className="text-[#f07050] text-sm font-medium">Recording · {elapsed}s</p>
+            <p className="room-muted mt-1 text-xs">Click stop when you finish speaking</p>
           </>
         ) : (
           <>
-            <p className="text-muted text-sm">Click to start recording</p>
-            <p className="text-dim text-xs mt-0.5">Click again when you've finished your answer</p>
+            <p className="text-[#edf3ed] text-sm">Your microphone is ready</p>
+            <p className="room-muted mt-1 text-xs">Start when you are ready to answer</p>
           </>
         )}
       </div>

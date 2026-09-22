@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui";
 import { SESSION_DURATION_SECONDS } from "@/lib/interview/config";
 
 const TYPE_META: Record<string, { label: string; variant: any; hint: string }> = {
@@ -39,37 +38,31 @@ export default function QuestionCard({ question, questionType, turnIndex, remain
   const seconds = String(remainingSeconds % 60).padStart(2, "0");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Progress */}
-      <div className="flex items-center justify-between text-xs text-muted">
-        <span>Question {turnIndex + 1} · {minutes}:{seconds} remaining</span>
-        <Badge variant={meta.variant}>{meta.label}</Badge>
+      <div className="flex items-center justify-between room-muted">
+        <span className="room-kicker">Question {String(turnIndex + 1).padStart(2, "0")}</span>
+        <span className="text-xs">{minutes}:{seconds} remaining</span>
       </div>
-      <div className="w-full h-1 bg-surface rounded-full overflow-hidden">
-        <div className="h-full bg-accent rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+      <div className="h-px w-full bg-white/10 overflow-hidden">
+        <div className="h-full bg-[#d4f36a] transition-all duration-700" style={{ width: `${pct}%` }} />
       </div>
 
       {/* Avatar + question */}
-      <div className="flex gap-3 items-start">
-        <div className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors
-          ${isSpeaking ? "border-accent bg-accent-dim animate-pulse" : "border-border bg-surface"}`}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeLinecap="round" />
-          </svg>
-        </div>
-        <div className="flex-1 pt-0.5">
-          <p className="text-ink text-base leading-relaxed font-medium">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 room-kicker"><span className={`h-2 w-2 rounded-full ${isSpeaking ? "bg-[#d4f36a] animate-pulse" : "bg-white/30"}`} />{isSpeaking ? "Interviewer speaking" : meta.label}</div>
+        <div className="max-w-2xl">
+          <p className="text-[clamp(1.45rem,3vw,2.35rem)] leading-[1.12] tracking-[-.02em] text-[#edf3ed] font-medium">
             {displayed}
             {displayed.length < question.length && (
-              <span className="inline-block w-0.5 h-4 bg-accent ml-0.5 animate-blink" />
+              <span className="inline-block w-0.5 h-8 bg-[#d4f36a] ml-1 animate-blink align-middle" />
             )}
           </p>
         </div>
       </div>
 
       {/* Hint */}
-      <div className="ml-12 text-xs text-dim italic">{meta.hint}</div>
+      <div className="text-xs room-muted border-l border-[#d4f36a]/40 pl-3">{meta.hint}</div>
     </div>
   );
 }

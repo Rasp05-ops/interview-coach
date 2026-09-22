@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { mkdtemp, rm, writeFile } from "fs/promises";
 import os from "os";
 import path from "path";
-import db, { q } from "@/lib/db";
+import db, { q, isPersistentDbConfigured } from "@/lib/db";
 import { transcribeBuffer, analyzeDelivery, isMicrophoneCheck, looksLikeConversationalQuestion } from "@/lib/ai/transcribe";
 import { evaluateAnswer, generateNextQuestion, detectSTAR, classifyConversationalTurn } from "@/lib/ai/interviewer";
 import { detectEOT, resolveDuration } from "@/lib/audio/eot";
@@ -13,6 +13,12 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  if ((process.env.VERCEL || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT) && !isPersistentDbConfigured()) {
+    return NextResponse.json({
+      error: "This deployment is missing a persistent database. The interview cannot continue without shared session storage.",
+      code: "DB_NOT_CONFIGURED",
+    }, { status: 503 });
+  }
   const form = await req.formData();
   const audio = form.get("audio") as File | null;
   const sessionId = form.get("sessionId") as string;

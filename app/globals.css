@@ -5,23 +5,31 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
-  background: #f3f5f2;
+  background: #edf3ef;
   color: #17231f;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-image: radial-gradient(circle at 8% 0%, rgba(213, 235, 222, 0.9), transparent 28rem),
-    linear-gradient(135deg, #f8faf7 0%, #eef2ee 100%);
+  background-image:
+    radial-gradient(circle at top left, rgba(168, 219, 186, 0.55), transparent 30%),
+    radial-gradient(circle at top right, rgba(246, 173, 143, 0.28), transparent 24%),
+    linear-gradient(135deg, #f7faf7 0%, #edf2ee 100%);
   min-height: 100vh;
 }
 ::-webkit-scrollbar { width: 7px; height: 7px; }
-::-webkit-scrollbar-track { background: #e7ece7; }
-::-webkit-scrollbar-thumb { background: #aab8ad; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #edf3ee; }
+::-webkit-scrollbar-thumb { background: #bcc9c1; border-radius: 999px; }
 input[type="range"] { accent-color: #e05b3f; }
 textarea { resize: none; }
-::selection { background: #f3b8a9; color: #17231f; }
+::selection { background: rgba(246,173,143,0.5); color: #17231f; }
 
 .display-face { font-family: Georgia, "Times New Roman", serif; letter-spacing: -0.02em; }
 .studio-grid { background-image: linear-gradient(rgba(31, 65, 50, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(31, 65, 50, 0.045) 1px, transparent 1px); background-size: 32px 32px; }
+
+@keyframes fadeUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes floatSoft { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+
+.animate-fade-up { animation: fadeUp 0.45s ease-out; }
+.float-soft { animation: floatSoft 5s ease-in-out infinite; }
 
 .interview-room {
   background: #111716;

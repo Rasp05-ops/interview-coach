@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuid } from "uuid";
-import db, { q } from "@/lib/db";
+import db, { q, isPersistentDbConfigured } from "@/lib/db";
 import { generateFirstQuestion } from "@/lib/ai/interviewer";
 import { SESSION_DURATION_SECONDS } from "@/lib/interview/config";
 
@@ -9,6 +9,11 @@ export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
+    if ((process.env.VERCEL || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT) && !isPersistentDbConfigured()) {
+      return NextResponse.json({
+        error: "This production deployment is missing a persistent database. Configure DB_PATH before starting interviews.",
+      }, { status: 503 });
+    }
     const { sessionId } = await req.json();
     const session = q.session.get.get(sessionId) as any;
     if (!session) return NextResponse.json({ error: "session not found" }, { status: 404 });

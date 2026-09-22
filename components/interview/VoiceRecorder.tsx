@@ -11,6 +11,7 @@ interface Props {
 export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Props) {
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [smartTurnReady, setSmartTurnReady] = useState(true);
   const [bars, setBars] = useState<number[]>(Array(16).fill(8));
   const mrRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -43,6 +44,8 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
           }
         } catch { /* Keep manual stop available if the service sends an invalid event. */ }
       };
+      socket.onerror = () => setSmartTurnReady(false);
+      socket.onclose = () => setSmartTurnReady(false);
       const context = new AudioContext();
       await context.audioWorklet.addModule("/audio-stream-processor.js");
       const source = context.createMediaStreamSource(stream);
@@ -71,6 +74,7 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
   async function start() {
     if (disabled || recording) return;
     try {
+      setSmartTurnReady(true);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       chunksRef.current = [];
@@ -136,23 +140,28 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
 
   return (
     <div className="flex flex-col items-center gap-5 py-2">
-      {/* Volume bars */}
-      <div className="flex h-12 items-center justify-center gap-[4px]" aria-label={recording ? "Voice activity" : "Microphone ready"}>
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            className={`w-1 rounded-full transition-all duration-75 ${recording ? "bg-[#f07050]" : "bg-white/20"} ${recording ? "animate-wave" : ""}`}
-            style={{ height: `${Math.min(56, h)}px` }}
-          />
-        ))}
+      <div className="flex flex-col items-center gap-3">
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[#b3c3b8]">
+          <span className={`h-2 w-2 rounded-full ${smartTurnReady ? "bg-[#d4f36a] shadow-[0_0_14px_rgba(212,243,106,0.9)]" : "bg-[#f7b28d]"}`} />
+          {smartTurnReady ? "Smart Turn live" : "Manual stop mode"}
+        </div>
+
+        <div className="flex h-12 items-center justify-center gap-[4px]" aria-label={recording ? "Voice activity" : "Microphone ready"}>
+          {bars.map((h, i) => (
+            <div
+              key={i}
+              className={`w-1 rounded-full transition-all duration-75 ${recording ? "bg-[#f07050]" : "bg-white/20"} ${recording ? "animate-wave" : ""}`}
+              style={{ height: `${Math.min(56, h)}px` }}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Big mic button */}
       <button
         onClick={recording ? stop : start}
         disabled={disabled || isProcessing}
-        className={`room-button h-16 w-16 !p-0 text-white
-          ${recording ? "recording recording-pulse" : "bg-white/15 hover:bg-white/25"}
+        className={`room-button h-18 w-18 !p-0 text-white shadow-[0_0_40px_rgba(240,112,80,0.32)]
+          ${recording ? "recording recording-pulse" : "bg-gradient-to-br from-[#f7a07e] to-[#ef7154] hover:scale-[1.03]"}
           disabled:opacity-40 disabled:cursor-not-allowed`}
       >
         {recording ? (
@@ -172,18 +181,18 @@ export default function VoiceRecorder({ onComplete, disabled, isProcessing }: Pr
       </button>
 
       {/* Status */}
-      <div className="text-center min-h-10">
+      <div className="min-h-10 text-center">
         {isProcessing ? (
-          <p className="text-muted text-sm animate-pulse">Analysing your answer…</p>
+          <p className="text-[#dfece3] text-sm animate-pulse">Analysing your answer…</p>
         ) : recording ? (
           <>
             <p className="text-[#f07050] text-sm font-medium">Recording · {elapsed}s</p>
-            <p className="room-muted mt-1 text-xs">Click stop when you finish speaking</p>
+            <p className="text-[#a8b7ae] mt-1 text-xs">Click stop when you finish speaking</p>
           </>
         ) : (
           <>
             <p className="text-[#edf3ed] text-sm">Your microphone is ready</p>
-            <p className="room-muted mt-1 text-xs">Start when you are ready to answer</p>
+            <p className="text-[#a8b7ae] mt-1 text-xs">{smartTurnReady ? "Smart Turn will stop the recording when you pause." : "Manual stop is enabled if Smart Turn is unavailable."}</p>
           </>
         )}
       </div>

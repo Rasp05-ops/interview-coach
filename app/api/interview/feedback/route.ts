@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import db, { q } from "@/lib/db";
+import db, { q, isPersistentDbConfigured } from "@/lib/db";
 import { generateSummary } from "@/lib/ai/interviewer";
 
 export const runtime = "nodejs";
@@ -7,6 +7,11 @@ export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
+    if ((process.env.VERCEL || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT) && !isPersistentDbConfigured()) {
+      return NextResponse.json({
+        error: "This deployment is missing a persistent database. Session results cannot be saved without shared storage.",
+      }, { status: 503 });
+    }
     const { sessionId } = await req.json();
     const session = q.session.get.get(sessionId) as any;
     if (!session) return NextResponse.json({ error: "not found" }, { status: 404 });

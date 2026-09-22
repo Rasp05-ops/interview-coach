@@ -29,6 +29,34 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
   const [conversationNotice, setConversationNotice] = useState("");
   const nextRef = useRef<QState | null>(null);
 
+  const startInterview = useCallback(async () => {
+    setError("");
+    setConversationNotice("");
+    setFeedback(null);
+    setCurrent(null);
+    try {
+      const r = await fetch("/api/interview/start", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Unable to start the interview");
+      const q: QState = {
+        turnId: d.turnId,
+        question: d.question,
+        questionType: d.questionType,
+        turnIndex: d.turnIndex,
+        remainingSeconds: d.remainingSeconds ?? SESSION_DURATION_SECONDS,
+      };
+      setCurrent(q);
+      setPhase("speaking");
+      speak(d.question, () => setPhase("recording"));
+    } catch (e: any) {
+      setError(e.message || "Unable to start the interview");
+      setPhase("loading");
+    }
+  }, [sessionId, speak]);
+
   useEffect(() => {
     if (!current || phase === "finishing") return;
     const timer = setInterval(() => {
@@ -52,21 +80,8 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
 
   // Boot: get first question
   useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch("/api/interview/start", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId }),
-        });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error);
-        const q: QState = { turnId: d.turnId, question: d.question, questionType: d.questionType, turnIndex: 0, remainingSeconds: d.remainingSeconds ?? SESSION_DURATION_SECONDS };
-        setCurrent(q);
-        setPhase("speaking");
-        speak(d.question, () => setPhase("recording"));
-      } catch (e: any) { setError(e.message); }
-    })();
-  }, [sessionId]);
+    void startInterview();
+  }, [startInterview]);
 
   const handleRecorded = useCallback(async (blob: Blob, secs: number) => {
     if (!current) return;
@@ -141,10 +156,13 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
   }
 
   if (error) return (
-    <div className="max-w-xl mx-auto mt-20 text-center space-y-4">
-      <p className="text-danger">Something went wrong</p>
-      <div className="text-sm text-muted bg-danger-dim border border-danger/30 rounded-xl p-4">{error}</div>
-      <Button onClick={() => { setError(""); setPhase("recording"); }} variant="ghost">Retry</Button>
+    <div className="mx-auto mt-12 max-w-xl rounded-[28px] border border-[#f3c0b2] bg-[#fff7f5] p-8 text-center shadow-[0_18px_60px_rgba(25,38,33,0.08)] animate-fade-up">
+      <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#c8674c]">Something went wrong</p>
+      <div className="mt-4 rounded-2xl border border-[#f0c4b6] bg-[#fff1ee] p-4 text-sm leading-6 text-[#4e322b]">{error}</div>
+      <div className="mt-6 flex items-center justify-center gap-3">
+        <Button onClick={() => void startInterview()} variant="ghost">Retry</Button>
+        <Button onClick={() => router.push("/setup")}>Back to setup</Button>
+      </div>
     </div>
   );
 
@@ -168,8 +186,11 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
   );
 
   if (phase === "loading") return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-      <Spinner size={40} /><p className="text-muted">Preparing your interview…</p>
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 animate-fade-up">
+      <div className="rounded-full border border-white/10 bg-white/60 p-4 shadow-[0_18px_56px_rgba(20,26,22,0.08)] backdrop-blur-sm">
+        <Spinner size={40} />
+      </div>
+      <p className="text-sm font-medium text-[#4d5d57]">Preparing your interview…</p>
       {notice}
     </div>
   );
@@ -179,18 +200,27 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
 
   return (
     <>
-    <div className="interview-room mx-auto max-w-6xl rounded-[28px] px-5 py-5 sm:px-8 sm:py-7">
+    <div className="interview-room mx-auto max-w-6xl rounded-[32px] px-5 py-5 shadow-[0_30px_100px_rgba(17,25,21,0.12)] ring-1 ring-black/5 sm:px-8 sm:py-7">
       <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-5">
-        <button onClick={() => router.push("/")} className="room-muted text-xs transition-colors hover:text-white">← Exit room</button>
-        <div className="flex items-center gap-3"><span className="room-kicker hidden sm:block">Live interview</span><span className="h-2 w-2 rounded-full bg-[#d4f36a] animate-pulse" /><Button onClick={endEarly} variant="ghost" size="sm" disabled={phase === "finishing"}>End session</Button></div>
+        <button onClick={() => router.push("/")} className="text-xs font-medium text-[#b7c7bf] transition-colors hover:text-white">← Exit room</button>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-[#dfece3] sm:block">Live interview</span>
+          <span className="h-2 w-2 rounded-full bg-[#d4f36a] animate-pulse" />
+          <Button onClick={endEarly} variant="ghost" size="sm" disabled={phase === "finishing"}>End session</Button>
+        </div>
       </div>
 
-      <div className="relative z-10 grid gap-6 py-7 lg:grid-cols-[1.1fr_.9fr]">
+      <div className="relative z-10 grid gap-6 py-7 lg:grid-cols-[1.15fr_.85fr]">
         <section className="space-y-6">
-          {current && <div className="room-panel rounded-[24px] p-5 sm:p-7"><QuestionCard question={current.question} questionType={current.questionType} turnIndex={current.turnIndex} remainingSeconds={current.remainingSeconds} isSpeaking={phase === "speaking"} /></div>}
-          <div className={`voice-stage room-panel rounded-[24px] ${stageClass}`}>
+          {current && (
+            <div className="room-panel rounded-[26px] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-7 animate-fade-up">
+              <QuestionCard question={current.question} questionType={current.questionType} turnIndex={current.turnIndex} remainingSeconds={current.remainingSeconds} isSpeaking={phase === "speaking"} />
+            </div>
+          )}
+
+          <div className={`voice-stage room-panel rounded-[26px] ${stageClass}`}>
             <div className="voice-orbit" />
-            <div className="voice-core" aria-hidden="true">
+            <div className="voice-core float-soft" aria-hidden="true">
               {phase === "recording" ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v5m-3 0h6" strokeLinecap="round"/></svg> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 12h2m3-4v8m4-11v14m4-11v8m3-4h-2" strokeLinecap="round"/></svg>}
             </div>
             <div className="voice-state">{stageLabel}</div>
@@ -198,42 +228,45 @@ export default function InterviewSession({ sessionId }: { sessionId: string }) {
         </section>
 
         <aside className="flex flex-col gap-6">
-          <div className="room-panel rounded-[24px] p-5 sm:p-7">
-            <div className="room-kicker mb-4">Response console</div>
-        {(phase === "speaking" || phase === "recording") && (
-          <VoiceRecorder
-            onComplete={handleRecorded}
-            disabled={phase === "speaking"}
-            isProcessing={false}
-          />
-        )}
+          <div className="room-panel rounded-[26px] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-7">
+            <div className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9fb3a8]">Response console</div>
+            {(phase === "speaking" || phase === "recording") && (
+              <VoiceRecorder
+                onComplete={handleRecorded}
+                disabled={phase === "speaking"}
+                isProcessing={false}
+              />
+            )}
 
-        {phase === "processing" && (
-          <div className="flex flex-col items-center gap-3 py-10">
-            <Spinner size={36} />
-            <p className="text-muted text-sm">Transcribing · detecting STAR · evaluating…</p>
-          </div>
-        )}
+            {phase === "processing" && (
+              <div className="flex flex-col items-center gap-3 py-10">
+                <Spinner size={36} />
+                <p className="text-sm text-[#dfece3]">Transcribing · detecting STAR · evaluating…</p>
+              </div>
+            )}
 
-        {phase === "finishing" && (
-          <div className="flex flex-col items-center gap-3 py-10">
-            <Spinner size={36} />
-            <p className="text-muted text-sm">Generating your session report…</p>
-          </div>
-        )}
+            {phase === "finishing" && (
+              <div className="flex flex-col items-center gap-3 py-10">
+                <Spinner size={36} />
+                <p className="text-sm text-[#dfece3]">Generating your session report…</p>
+              </div>
+            )}
 
-        {phase === "feedback" && feedback && (
-          <div className="space-y-4 text-[#edf3ed]">
-            <AnswerFeedback {...feedback} />
-            <div className="border-t border-white/10 pt-4">
-              <button onClick={handleNext} className="room-button w-full" disabled={phase !== "feedback"}>
-                {nextRef.current ? "Next question →" : "Finish & see results →"}
-              </button>
-            </div>
+            {phase === "feedback" && feedback && (
+              <div className="space-y-4 text-[#edf3ed] animate-fade-up">
+                <AnswerFeedback {...feedback} />
+                <div className="border-t border-white/10 pt-4">
+                  <button onClick={handleNext} className="room-button w-full" disabled={phase !== "feedback"}>
+                    {nextRef.current ? "Next question →" : "Finish & see results →"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          <div className="hidden rounded-[26px] border border-white/10 bg-white/5 p-5 text-xs leading-6 text-[#b7c7bf] lg:block">
+            The room listens for a complete thought. Take a breath, be specific, and let the answer land before stopping.
           </div>
-          <div className="room-muted hidden rounded-[24px] border border-white/10 p-5 text-xs leading-6 lg:block">The room listens for a complete thought. Take a breath, be specific, and let the answer land before stopping.</div>
         </aside>
       </div>
     </div>

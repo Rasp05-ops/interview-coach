@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, isPersistentDbConfigured } from "@/lib/db";
 import { generateSummary } from "@/lib/ai/interviewer";
+import { requireUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
+  const auth = requireUser(req);
+  if ("response" in auth) return auth.response;
+  const { user } = auth;
   try {
     if ((process.env.VERCEL || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT) && !isPersistentDbConfigured()) {
       return NextResponse.json({
@@ -13,10 +17,10 @@ export async function POST(req: NextRequest) {
       }, { status: 503 });
     }
     const { sessionId } = await req.json();
-    const session = await q.session.get.get(sessionId) as any;
+    const session = await q.session.get.get(sessionId, user.id) as any;
     if (!session) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-    const turns = ((await q.turn.bySession.all(sessionId)) as any[]).filter((t: any) => t.answer_text);
+    const turns = ((await q.turn.bySession.all(sessionId, user.id)) as any[]).filter((t: any) => t.answer_text);
     if (!turns.length) return NextResponse.json({ error: "no answers yet" }, { status: 400 });
 
     const summary = await generateSummary({
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest) {
     });
 
     const dur = Math.round(turns.reduce((s: number, t: any) => s + (t.answer_audio_s || 0), 0));
-    await q.session.finish.run({ id: sessionId, score: summary.overallScore, dur, verdict: summary.verdict, study_plan: JSON.stringify(summary.studyPlan) });
+    await q.session.finish.run({ id: sessionId, owner_user_id: user.id, score: summary.overallScore, dur, verdict: summary.verdict, study_plan: JSON.stringify(summary.studyPlan) });
 
     return NextResponse.json({
       ...summary,

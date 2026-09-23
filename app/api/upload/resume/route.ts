@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractText } from "@/lib/ai/extract";
+import { requireUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 20;
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
+  const auth = requireUser(req);
+  if ("response" in auth) return auth.response;
   try {
     const form = await req.formData();
     const file = form.get("file") as File | null;

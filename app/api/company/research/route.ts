@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth";
 import { fetchCompanyContext } from "@/lib/ai/company";
 
 export const runtime = "nodejs";
 export const maxDuration = 12;
 
 export async function POST(req: NextRequest) {
+  const auth = requireUser(req);
+  if ("response" in auth) return auth.response;
   try {
     const { url = "" } = await req.json();
     if (!url.trim()) return NextResponse.json({ context: "" });

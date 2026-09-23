@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth";
 
 // Thin proxy to the Python agent service so the browser never needs CORS or the service URL.
 const BASE = () => (process.env.AGENT_SERVICE_URL || "http://127.0.0.1:8001").replace(/\/$/, "");
 const ALLOWED = /^(health|sessions(\/[A-Za-z0-9]+(\/(answer|report|patience|blackboard|trace))?)?)$/;
 
 async function proxy(req: NextRequest, path: string[]) {
+  const auth = requireUser(req);
+  if ("response" in auth) return auth.response;
   const target = path.join("/");
   if (!ALLOWED.test(target)) return NextResponse.json({ error: "not found" }, { status: 404 });
   try {

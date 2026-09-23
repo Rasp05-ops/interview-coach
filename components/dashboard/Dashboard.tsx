@@ -45,7 +45,10 @@ export default function Dashboard() {
           <span className="display-face text-lg text-ink">Interview</span>
           <span className="text-[11px] tracking-[0.24em] text-dim group-hover:text-accent transition-colors">COACH</span>
         </button>
-        <Button onClick={() => router.push("/setup")}><IconPlus size={13} /> New session</Button>
+        <div className="flex items-center gap-2">
+          <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); router.replace("/login"); router.refresh(); }} className="rounded-xl px-3 py-2 text-xs text-muted transition-colors hover:bg-surface hover:text-ink">Sign out</button>
+          <Button onClick={() => router.push("/setup")}><IconPlus size={13} /> New session</Button>
+        </div>
       </header>
 
       <section className="grid lg:grid-cols-[1.25fr_.75fr] gap-4 mb-8 animate-fade-up stagger-1">

@@ -21,7 +21,8 @@ AI-powered mock interview platform built with Groq, local models, and SQLite.
 - 📊 **Score trend chart** — line chart of your scores across sessions
 - 📋 **Filler word detection** — counts "um", "uh", "you know", parenthetical "like"; hedges ("kind of", "actually") are reported separately
 - 📈 **Delivery metrics** — WPM, duration, and (when Whisper returns word timestamps) pauses and articulation rate per answer
-- 🗂️ **Session history** — all past sessions with full per-question breakdowns
+- 🔐 **Private accounts** — email/password sign-in; each account can access only its own interview sessions
+- 🗂️ **Session history** — each account sees its own past sessions with full per-question breakdowns
 
 ## Quick start
 
@@ -43,9 +44,11 @@ The app falls back to an energy-heuristic if this step is skipped. If the Python
 
 ### 4. Configure
 ```bash
-cp .env.local.example .env.local
-# add your key:  GROQ_API_KEY=gsk_...
+cp .env.example .env.local
+# Set GROQ_API_KEY and generate AUTH_SECRET:
+openssl rand -base64 48
 ```
+Set the generated value as `AUTH_SECRET` in `.env.local`; never commit secrets or API keys.
 
 ### 5. Run
 ```bash
@@ -105,21 +108,20 @@ The Python service provides the realtime `/agent` flow and a standalone `/ws/eot
 
 ## Production deployment
 
-### Vercel frontend
+### Vercel app
 
 1. Import this repository into Vercel with the Next.js framework.
 2. Add `GROQ_API_KEY` as an encrypted environment variable for Production, Preview, and Development.
-3. Add `AGENT_SERVICE_URL` with the public Railway HTTPS URL, for example `https://your-agent.up.railway.app`.
-4. Add `NEXT_PUBLIC_AGENT_WS_URL` with the Railway WebSocket URL, for example `wss://your-agent.up.railway.app`.
-5. Deploy and verify the health of the `/agent` flow.
+3. Add a long random `AUTH_SECRET` (generate with `openssl rand -base64 48`). Keep the Production value stable; use separate secrets for Preview and Development.
+4. Add `DATABASE_URL` pointing at hosted PostgreSQL reachable from Vercel. Use one database for Production instances and a separate database for Preview.
+5. Add `AGENT_SERVICE_URL` with the public Render HTTPS URL, for example `https://your-agent.onrender.com`.
+6. Set `NEXT_PUBLIC_AGENT_WS_URL` to `wss://your-agent.onrender.com` and `NEXT_PUBLIC_EOT_WS_URL` to `wss://your-agent.onrender.com/ws/eot`.
+7. Deploy and verify account registration, sign-in, session ownership across two accounts, and the `/agent` flow.
 
-### Railway backend
+### Render agent service
 
-1. Create a Railway service from the same repository.
-2. Railway will use `requirements.txt` and `railway.toml` at the repository root.
-3. Add `GROQ_API_KEY` to the Railway service variables.
-4. Deploy and confirm `https://your-agent.up.railway.app/health` returns `{\"ok\":true,...}`.
+1. Create a Render web service from this repository using the included `render.yaml`.
+2. Add `GROQ_API_KEY` in the Render service environment variables; Render downloads the Smart Turn model during its build.
+3. Deploy and confirm `https://your-agent.onrender.com/health` returns a healthy response.
 
-The Render equivalent uses `render.yaml` and downloads the Smart Turn CPU model during its build. Set `NEXT_PUBLIC_EOT_WS_URL` to `wss://your-render-service.onrender.com/ws/eot` on Vercel when the backend is deployed on Render.
-
-The Railway service is stateful in memory and its optional candidate memory is written to local disk. Use one running replica for this service; multiple replicas require shared session storage. The main Next.js interview flow uses SQLite, which is not durable on Vercel serverless deployments. Use a persistent database such as Railway Postgres or another hosted SQLite-compatible database before relying on session history in production.
+The Render agent service is stateful in memory and its optional candidate memory is written to local disk. Use one running replica for this service; multiple replicas require shared session storage. The main Next.js interview flow stores users, sessions, and turns in PostgreSQL via `DATABASE_URL`; SQLite is for local development only. Deploy these app changes before allowing users to sign up. Existing sessions remain unassigned after migration and will not appear under any account; back up the database first if you need to recover them manually.

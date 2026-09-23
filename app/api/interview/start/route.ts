@@ -3,11 +3,15 @@ import { v4 as uuid } from "uuid";
 import { q, isPersistentDbConfigured } from "@/lib/db";
 import { generateFirstQuestion } from "@/lib/ai/interviewer";
 import { SESSION_DURATION_SECONDS } from "@/lib/interview/config";
+import { requireUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
+  const auth = requireUser(req);
+  if ("response" in auth) return auth.response;
+  const { user } = auth;
   try {
     if ((process.env.VERCEL || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT) && !isPersistentDbConfigured()) {
       return NextResponse.json({
@@ -15,7 +19,7 @@ export async function POST(req: NextRequest) {
       }, { status: 503 });
     }
     const { sessionId } = await req.json();
-    const session = await q.session.get.get(sessionId) as any;
+    const session = await q.session.get.get(sessionId, user.id) as any;
     if (!session) return NextResponse.json({ error: "session not found" }, { status: 404 });
     const elapsed = Math.max(0, (Date.now() - Date.parse(`${session.created_at}Z`)) / 1000);
     if (elapsed >= SESSION_DURATION_SECONDS) return NextResponse.json({ error: "This interview session has expired." }, { status: 410 });
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest) {
       jdText: session.jd_text, resumeText: session.resume_text,
     });
     const turnId = uuid();
-    await q.turn.create.run({ id: turnId, session_id: sessionId, turn_index: 0, question, question_type: type });
+    await q.turn.create.run({ id: turnId, session_id: sessionId, owner_user_id: user.id, turn_index: 0, question, question_type: type });
     return NextResponse.json({ turnId, question, questionType: type, turnIndex: 0, remainingSeconds: Math.max(0, Math.floor(SESSION_DURATION_SECONDS - elapsed)) });
   } catch (e: any) {
     console.error("/api/interview/start", e);

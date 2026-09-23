@@ -8,11 +8,15 @@ import { transcribeBuffer, analyzeDelivery, isMicrophoneCheck, looksLikeConversa
 import { evaluateAnswer, generateNextQuestion, detectSTAR, classifyConversationalTurn } from "@/lib/ai/interviewer";
 import { detectEOT, resolveDuration } from "@/lib/audio/eot";
 import { SESSION_DURATION_SECONDS } from "@/lib/interview/config";
+import { requireUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  const auth = requireUser(req);
+  if ("response" in auth) return auth.response;
+  const { user } = auth;
   if ((process.env.VERCEL || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT) && !isPersistentDbConfigured()) {
     return NextResponse.json({
       error: "This deployment is missing a persistent database. The interview cannot continue without shared session storage.",
@@ -28,8 +32,8 @@ export async function POST(req: NextRequest) {
   if (!audio || !sessionId || !turnId)
     return NextResponse.json({ error: "audio, sessionId, turnId required" }, { status: 400 });
 
-  const session = await q.session.get.get(sessionId) as any;
-  const turn = await q.turn.get.get(turnId) as any;
+  const session = await q.session.get.get(sessionId, user.id) as any;
+  const turn = await q.turn.get.get(turnId, user.id) as any;
   if (!session || !turn || turn.session_id !== sessionId)
     return NextResponse.json({ error: "not found" }, { status: 404 });
   if (turn.answer_text)
@@ -77,7 +81,7 @@ export async function POST(req: NextRequest) {
     });
 
     await q.turn.update.run({
-      id: turnId,
+      id: turnId, owner_user_id: user.id,
       answer_text: transcript.text,
       answer_audio_s: audioSeconds,
       filler_count: delivery.fillerCount,
@@ -91,7 +95,7 @@ export async function POST(req: NextRequest) {
       eot_probability: eot.probability,
     });
 
-    const allTurns = await q.turn.bySession.all(sessionId) as any[];
+    const allTurns = await q.turn.bySession.all(sessionId, user.id) as any[];
     const nextIdx = turn.turn_index + 1;
     const elapsedSeconds = Math.max(0, (Date.now() - Date.parse(`${session.created_at}Z`)) / 1000);
     const isDone = elapsedSeconds >= SESSION_DURATION_SECONDS;
@@ -114,7 +118,7 @@ export async function POST(req: NextRequest) {
         nextTurnId = uuid();
         nextQuestion = next.question;
         nextQType = next.type;
-        await q.turn.create.run({ id: nextTurnId, session_id: sessionId, turn_index: nextIdx, question: nextQuestion, question_type: nextQType });
+        await q.turn.create.run({ id: nextTurnId, session_id: sessionId, owner_user_id: user.id, turn_index: nextIdx, question: nextQuestion, question_type: nextQType });
       }
     }
 

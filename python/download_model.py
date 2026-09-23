@@ -3,10 +3,9 @@ import argparse, os, sys, urllib.request
 
 DIR = os.path.dirname(__file__)
 MODELS = {
-    "cpu": ("https://huggingface.co/pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3-cpu.onnx", "smart-turn-v3-cpu.onnx", "~8 MB"),
-    "gpu": ("https://huggingface.co/pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3-gpu.onnx", "smart-turn-v3-gpu.onnx", "~32 MB"),
+    "cpu": ("https://huggingface.co/pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3.2-cpu.onnx", "smart-turn-v3-cpu.onnx", "~8 MB"),
+    "gpu": ("https://huggingface.co/pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3.2-gpu.onnx", "smart-turn-v3-gpu.onnx", "~32 MB"),
 }
-
 def download(variant="cpu"):
     url, fname, size = MODELS[variant]
     dest = os.path.join(DIR, fname)
